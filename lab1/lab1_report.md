@@ -53,10 +53,10 @@ Date of finished: 21.10.2025
 3. Файл README.md с инструкцией по запуску
 4. Файл .env.example для примера конфигурации
 ```
-![img0](images/img0.png)
+![img0](images/img0.png)\
 3. Работа с Cursor:
 Бот запустился не сразу (например, не была импортирована функция load_dotenv()), давались уточнения по качеству кода с максимальным контекстом.
 Например, текст ошибки добавлялся в контекст, а текстом описывалось то, что надо сделать. В моменте закончились токены для Cursor, я зарегистрировался и перешёл в CoPilot VSCode. Там добавил всё необходимое в контекст и закончил работу в нём.
-![img2](images/img2.png)
-4. Полноценный запуск был сделан через активацию `python venv`, 
-4. Видео работы по [ссылке](https://drive.google.com/file/d/1-yUejxkESDxINp_UHAAtIYWRKL6UJtAh/view?usp=sharing)
+![img2](images/img2.png)\
+4. Полноценный запуск был сделан через активацию `python venv`, бот доступен по [ссылке](https://t.me/itmoftmi_gap_bot)\
+5. Видео работы по [ссылке](https://drive.google.com/file/d/1-yUejxkESDxINp_UHAAtIYWRKL6UJtAh/view?usp=sharing)
