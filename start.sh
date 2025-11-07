@@ -1,24 +1,29 @@
-#!/usr/bin/env bash
-set -Eeuo pipefail
+#!/bin/sh
+set -eu
 
 # Переходим в папку с ботом
-cd "$(dirname "$0")/lab2"
-
+cd "$(dirname "$0")/lab2" || exit 1
 echo "[start.sh] Working dir: $(pwd)"
 
-# Проверяем необходимые токены (задай их в Railway → Variables)
+# Обязательные переменные окружения (задать в Railway → Variables)
 : "${BOT_TOKEN:?Set BOT_TOKEN in Railway project variables}"
 : "${NEWSAPI_KEY:?Set NEWSAPI_KEY in Railway project variables}"
 
-# Необязательные переменные (имеют дефолты в коде)
+# Необязательные (имеют дефолты в коде), экспортируем на всякий случай
 : "${BOT_TIMEZONE:=Europe/Moscow}"
 : "${DEFAULT_REGION:=ru}"
+export BOT_TIMEZONE DEFAULT_REGION
 
-echo "[start.sh] BOT_TIMEZONE=${BOT_TIMEZONE} DEFAULT_REGION=${DEFAULT_REGION}"
+# Определяем python
+if command -v python3 >/dev/null 2>&1; then
+  PY=python3
+else
+  PY=python
+fi
 
-# Обновляем pip и ставим зависимости
-python -m pip install --upgrade pip wheel setuptools
-pip install --no-cache-dir -r requirements.txt
+# Устанавливаем зависимости
+$PY -m pip install --upgrade pip setuptools wheel
+$PY -m pip install --no-cache-dir -r requirements.txt
 
 # Запускаем бота
-exec python bot.py
+exec $PY bot.py
