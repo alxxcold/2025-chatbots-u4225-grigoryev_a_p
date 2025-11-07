@@ -23,7 +23,7 @@ import random
 from datetime import time
 
 from dotenv import load_dotenv
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
@@ -31,6 +31,7 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
     Defaults,
+    CallbackQueryHandler,
 )
 
 # NewsAPI client
@@ -254,18 +255,45 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def set_region(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         chat_id = update.effective_chat.id
-        if not context.args:
-            await update.message.reply_text("🌍 Укажите регион: /region ru | /region us | /region eu")
+        # если пользователь передал аргумент — поддерживаем и этот путь
+        if context.args:
+            region = context.args[0].lower()
+            if region not in {"ru", "us", "eu"}:
+                await update.message.reply_text("❌ Недопустимый регион. Доступно: ru, us, eu.")
+                return
+            REGION_PREFS[chat_id] = region
+            await update.message.reply_text(f"✅ Регион сохранён: {region.upper()} — новости будут подбираться под него.")
             return
-        region = context.args[0].lower()
-        if region not in {"ru", "us", "eu"}:
-            await update.message.reply_text("❌ Недопустимый регион. Доступно: ru, us, eu.")
-            return
-        REGION_PREFS[chat_id] = region
-        await update.message.reply_text(f"✅ Регион сохранён: {region.upper()} — новости будут подбираться под него.")
+
+        # интерактивный выбор
+        keyboard = [[
+            InlineKeyboardButton("🇷🇺 RU", callback_data="region:ru"),
+            InlineKeyboardButton("🇺🇸 US", callback_data="region:us"),
+            InlineKeyboardButton("🇪🇺 EU", callback_data="region:eu"),
+        ]]
+        await update.message.reply_text(
+            "🌍 Выберите регион новостей:",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+        )
     except Exception as e:
         logging.exception("region failed: %s", e)
         await update.message.reply_text("Не удалось установить регион.")
+
+
+async def region_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    try:
+        query = update.callback_query
+        await query.answer()
+        _, region = query.data.split(":", 1)
+        if region not in {"ru", "us", "eu"}:
+            await query.edit_message_text("❌ Недопустимый регион.")
+            return
+        chat_id = query.message.chat_id
+        REGION_PREFS[chat_id] = region
+        await query.edit_message_text(f"✅ Регион сохранён: {region.upper()} — новости будут подбираться под него.")
+    except Exception as e:
+        logging.exception("region_callback failed: %s", e)
+        # короткая тихая обработка, чтобы не ломать UX
 
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -407,6 +435,21 @@ async def meet_reminder_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         logging.exception("meet_reminder_job failed: %s", e)
 
 
+async def _post_init(app: Application) -> None:
+    try:
+        await app.bot.set_my_commands([
+            BotCommand("help", "помощь по командам"),
+            BotCommand("about", "о платформе Commitly"),
+            BotCommand("contacts", "контакты команды"),
+            BotCommand("news", "свежие новости (можно указать тему)"),
+            BotCommand("region", "выбор региона новостей"),
+            BotCommand("start", "включить напоминания и цитаты"),
+            BotCommand("rate", "оценить работу бота"),
+        ])
+    except Exception as e:
+        logging.exception("set_my_commands failed: %s", e)
+
+
 # --------------------------
 # Точка входа
 # --------------------------
@@ -424,7 +467,8 @@ def main() -> None:
     application: Application = (
     ApplicationBuilder()
     .token(BOT_TOKEN)
-    .defaults(Defaults(parse_mode=ParseMode.HTML))  # <-- исправили
+    .defaults(Defaults(parse_mode=ParseMode.HTML))
+    .post_init(_post_init)
     .build()
     )
 
@@ -435,6 +479,7 @@ def main() -> None:
     application.add_handler(CommandHandler("news", news))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("region", set_region))
+    application.add_handler(CallbackQueryHandler(region_callback, pattern=r"^region:(ru|us|eu)$"))
     application.add_handler(CommandHandler("rate", rate_command))
 
 
