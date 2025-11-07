@@ -1,1 +1,5 @@
--r lab2/requirements.txt
+python-telegram-bot[job-queue]>=20,<22
+APScheduler>=3.10
+python-dotenv>=1.0.0
+newsapi-python>=0.2.7
+tzdata>=2024.1
