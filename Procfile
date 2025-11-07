@@ -1,1 +1,1 @@
-worker: python lab2/bot.py
+worker: sh start.sh
