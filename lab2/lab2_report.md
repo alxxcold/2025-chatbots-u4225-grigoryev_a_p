@@ -5,8 +5,8 @@ Year: 2025\
 Group: U4225\
 Author: Grigoryev Alexey Pavlovich\
 Lab: Lab1\
-Date of create: 21.10.2025\
-Date of finished: 21.10.2025
+Date of create: 31.10.2025\
+Date of finished: 31.10.2025
 
 В качестве задания было выбрано следующее:
 **Бот-помощник для команды**
